@@ -1,78 +1,106 @@
-pragma solidity 0.4.19;
+pragma solidity 0.4.18;
 
-import "zeppelin-solidity/contracts/token/MintableToken.sol";
-import "./CoinFiCrowdsale.sol";
+import "./math/SafeMath.sol";
+import "./token/BurnableToken.sol";
+import "./token/StandardToken.sol";
+import "./ownership/Ownable.sol";
+//import "./CoinFiCrowdsale.sol";
 
 
 /**
  * @title CoinFiToken
  * @dev CoinFi Token implementation.
  */
-contract CoinFiToken is MintableToken {
-    string public constant NAME = "CoinFi";
-    string public constant SYMBOL = "COFI";
-    uint256 public constant DECIMALS = 18;
+contract CoinFiToken is StandardToken, BurnableToken, Ownable {
+    string public constant name = "CoinFi Token";
+    string public constant symbol = "COFI";
+    uint8 public constant decimals = 18;
 
-    uint256 public cap;
-    bool private transfersEnabled = false;
+    uint256 public constant DECIMALS_FACTOR     = 10 ** uint256(decimals);
+    uint256 public constant TOKEN_SUPPLY        = 300000000 * DECIMALS_FACTOR;
+    uint256 public constant CROWDSALE_TOKENS    =  12000000 * DECIMALS_FACTOR;
+    uint256 public constant FOUNDATION_TOKENS   =  60000000 * DECIMALS_FACTOR;
+    uint256 public constant PRIVATE_SALE_TOKENS = 138000000 * DECIMALS_FACTOR;
+    uint256 public constant TEAM_TOKENS         =  90000000 * DECIMALS_FACTOR;
 
-    /**
-     * @dev Only the contract owner can transfer without restrictions.
-     *      Regular holders need to wait until sale is finalized.
-     * @param _sender — The address sending the tokens
-     * @param _value — The number of tokens to send
-     */
-    modifier canTransfer(address _sender, uint256 _value) {
-        require(transfersEnabled || _sender == owner);
+    // Properties
+    uint256 public tokenSupply;             // Total number of tokens
+    uint256 public crowdsaleSupply;         // Number of tokens available for crowdsale
+
+    address public crowdsaleAddress;        // Address of crowdsale smart contract
+    address public adminAddress;            // Address of sale administrator for manual distribution to private participants
+
+    bool public transferEnabled = false;    // Indicates whether token transfer is enabled
+
+    // Modifiers
+    modifier onlyWhenTransferEnabled() {
+        if (!transferEnabled) {
+            require(msg.sender == adminAddress || msg.sender == crowdsaleAddress);
+        }
         _;
     }
 
     /**
-     * @dev Constructor that sets a maximum supply cap.
-     * @param _cap — The maximum supply cap.
+     * Ensures that the listed addresses are not valid recipients of tokens.
+     *
+     * 0x0           - the zero address is not valid
+     * this          - the contract itself should not receive tokens
+     * owner         - the owner has all the initial tokens, but cannot receive any back
      */
-    function CoinFiToken(uint256 _cap) public {
-        cap = _cap;
+    modifier validDestination(address _to) {
+        require(_to != address(0x0));
+        require(_to != address(this));
+        require(_to != owner);
+        _;
+    }
+
+    // Constructor: initiates token genesis and allocates balance to admin owner.
+    // @param _adminAddress The address of the administrator
+    function CoinFiToken(address _admin) public {
+        require(msg.sender != _admin);
+
+        tokenSupply = TOKEN_SUPPLY;
+        crowdsaleSupply = CROWDSALE_TOKENS;
+
+        // Genesis; mint all tokens
+        balances[msg.sender] = tokenSupply;
+        Transfer(address(0x0), msg.sender, tokenSupply);
+
+        adminAddress = _admin;
+        approve(adminAddress, tokenSupply);
     }
 
     /**
-     * @dev Overrides MintableToken.mint() for restricting supply under cap
-     * @param _to — The address to receive minted tokens
-     * @param _value — The number of tokens to mint
+     * Enables everyone to start transferring their tokens.
+     * This can only be called by the token owner.
+     * Once enabled, disabling transfers no longer impossible.
      */
-    function mint(address _to, uint256 _value) public onlyOwner canMint returns (bool) {
-        require(totalSupply.add(_value) <= cap);
-        return super.mint(_to, _value);
+    function enableTransfer() external onlyOwner {
+        transferEnabled = true;
     }
 
     /**
-     * @dev Checks modifier and allows transfer if tokens are not locked.
-     * @param _to — The address to receive tokens
-     * @param _value — The number of tokens to send
+     * Overrides the ERC20 transfer() function to only allow token transfers after enableTransfer() is called.
      */
-    function transfer(address _to, uint256 _value)
-        public canTransfer(msg.sender, _value) returns (bool)
-    {
+    function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled validDestination(_to) returns (bool) {
         return super.transfer(_to, _value);
     }
 
     /**
-     * @dev Checks modifier and allows transfer if tokens are not locked.
-     * @param _from — The address to send tokens from
-     * @param _to — The address to receive tokens
-     * @param _value — The number of tokens to send
+     * Overrides the ERC20 transferFrom() function to only allow token transfers after enableTransfer() is called.
      */
-    function transferFrom(address _from, address _to, uint256 _value)
-        public canTransfer(_from, _value) returns (bool)
-    {
+    function transferFrom(address _from, address _to, uint256 _value) public onlyWhenTransferEnabled validDestination(_to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
     }
 
     /**
-     * @dev Enables token transfers.
-     *      Called when the token sale is successfully finalized
+     * Overrides the burn() function to ensure it can only be called after transfers are enabled.
+     *
+     * @param _value The amount of tokens to burn
      */
-    function enableTransfers() public onlyOwner {
-        transfersEnabled = true;
+    function burn(uint256 _value) public {
+        require(transferEnabled || msg.sender == owner);
+        super.burn(_value);
+        Transfer(msg.sender, address(0x0), _value);
     }
 }
