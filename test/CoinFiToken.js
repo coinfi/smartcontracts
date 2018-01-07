@@ -77,3 +77,7 @@ contract("CoinFiToken", function(accounts) {
     assert.equal(crowdsaleBalance, crowdsaleSupply, "crowdsale address should end with anticipated crowdsale supply");
   });
 });
+
+// TODO: Test token transfer functionality.
+
+// TODO: Test token burning functionality.

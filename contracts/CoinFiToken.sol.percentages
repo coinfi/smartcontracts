@@ -16,19 +16,25 @@ contract CoinFiToken is StandardToken, BurnableToken, Ownable {
     string public constant symbol = "COFI";
     uint8 public constant decimals = 18;
 
-    uint256 public constant DECIMALS_FACTOR     = 10 ** uint256(decimals);
-    uint256 public constant TOKEN_SUPPLY        = 300000000 * DECIMALS_FACTOR;
-    uint256 public constant PUBLIC_SALE_TOKENS  =  12000000 * DECIMALS_FACTOR;
-    uint256 public constant PRIVATE_SALE_TOKENS = 138000000 * DECIMALS_FACTOR;
-    uint256 public constant FOUNDATION_TOKENS   =  60000000 * DECIMALS_FACTOR;
-    uint256 public constant TEAM_TOKENS         =  90000000 * DECIMALS_FACTOR;
+    uint256 public constant DECIMALS_FACTOR           = 10 ** uint256(decimals);
+    // TODO: Pass in as parameters?
+    uint256 public constant TOKEN_SUPPLY              = 300000000 * DECIMALS_FACTOR;
+    uint256 public constant PUBLIC_SALE_TOKEN_SUPPLY  =  12000000 * DECIMALS_FACTOR;
+    uint256 public constant PRIVATE_SALE_TOKEN_SUPPLY = 138000000 * DECIMALS_FACTOR;
+    uint256 public constant FOUNDATION_TOKEN_SUPPLY   =  60000000 * DECIMALS_FACTOR;
+    uint256 public constant TEAM_VAULT_TOKEN_SUPPLY   =  90000000 * DECIMALS_FACTOR;
 
     // Properties
     uint256 public tokenSupply;             // Total number of tokens
     uint256 public publicSaleSupply;        // Number of tokens available for public sale
+    uint256 public privateSaleSupply;       // Number of tokens available for private sale
+    uint256 public foundationSupply;        // Number of tokens available for foundation
+    uint256 public teamVaultSupply;         // Number of tokens available for team
 
-    address public publicSaleAddress;       // Address of public sale smart contract
+    address public publicSaleAddress;       // Address of crowdsale smart contract
     address public adminAddress;            // Address of sale administrator for manual distribution to private participants
+    address public foundationAddress;       // Address to receive tokens assigned to Foundation
+    address public teamVaultAddress;        // Address of VestingVault for team tokens, time locked
 
     bool public transferEnabled = false;    // Indicates whether token transfer is enabled
 
@@ -56,11 +62,25 @@ contract CoinFiToken is StandardToken, BurnableToken, Ownable {
 
     // Constructor: initiates token genesis and allocates balance to admin owner.
     // @param _adminAddress The address of the administrator
-    function CoinFiToken(address _admin) public {
+    function CoinFiToken(
+        address _admin,
+        uint256 _tokenSupply,
+        uint8 _publicSalePct,
+        uint8 _privateSalePct,
+        uint8 _foundationPct,
+        uint8 _teamVaultPct,
+    ) public {
         require(msg.sender != _admin);
+        // Sum of all percentages must equal 100%
+        require(1 == _publicSalePct + _privateSalePct + _foundationPct + _teamVaultPct);
 
-        tokenSupply = TOKEN_SUPPLY;
-        publicSaleSupply = PUBLIC_SALE_TOKENS;
+        tokenSupply = _tokenSupply;
+        publicSaleSupply = _publicSalePct * _tokenSupply;
+        privateSaleSupply = _privateSalePct * _tokenSupply;
+        foundationSupply = _foundationPct * _tokenSupply;
+        teamVaultSupply = _teamVaultPct * _tokenSupply;
+
+        require(tokenSupply == publicSaleSupply + privateSaleSupply + foundationSupply + teamVaultSupply);
 
         // Genesis; mint all tokens
         balances[msg.sender] = tokenSupply;
@@ -68,33 +88,18 @@ contract CoinFiToken is StandardToken, BurnableToken, Ownable {
 
         adminAddress = _admin;
         approve(adminAddress, tokenSupply);
-    }
 
-    /**
-     * Associates this token with an existing public sale smart contract,
-     * allocating the contract an allowance of tokens from the public sale supply.
-     * This gives the public sale the ability to call transferFrom() to transfer
-     * tokens to whomever has purchased them.
-     *
-     * @param _publicSaleAddress The address of the public sale contract that will sell this token
-     * @param _amountOfTokens The supply of tokens provided to the public sale
-     */
-    function allocateToPublicSale(address _publicSaleAddress, uint256 _amountOfTokens) external onlyOwner {
-        require(!transferEnabled);
-        require(_amountOfTokens <= publicSaleSupply);
-
-        // Clear old allocation and set allocation of new;
-        // Note this operation supports different contract addresses
-        approve(publicSaleAddress, 0);
-        approve(_publicSaleAddress, _amountOfTokens);
-
-        publicSaleAddress = _publicSaleAddress;
+        // Allocate tokens accordingly
+        Transfer(msg.sender, publicSaleAddress, publicSaleSupply);
+        Transfer(msg.sender, foundationAddress, foundationSupply);
+        Transfer(msg.sender, teamVaultAddress, teamVaultSupply);
+        // Private sale tokens are left in this admin account for manual transfer.
     }
 
     /**
      * Enables everyone to start transferring their tokens.
      * This can only be called by the token owner.
-     * Once enabled, disabling transfers no longer possible.
+     * Once enabled, disabling transfers no longer impossible.
      */
     function enableTransfer() external onlyOwner {
         transferEnabled = true;

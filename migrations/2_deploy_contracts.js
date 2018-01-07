@@ -16,28 +16,18 @@ var CoinFiSale = artifacts.require("./CoinFiSale.sol");
 
 module.exports = function(deployer, network, accounts) {
     console.log("Accounts: " + accounts);
-
-    deployer.deploy(SafeMath);
-    deployer.deploy(Ownable);
-    deployer.link(Ownable, Pausable);
-    deployer.deploy(Pausable);
-
-    deployer.deploy(BasicToken);
-    deployer.link(BasicToken, SafeMath);
-    deployer.link(BasicToken, ERC20Basic);
-
-    deployer.deploy(StandardToken);
-    deployer.link(StandardToken, BasicToken);
-
-    deployer.deploy(CoinFiToken);
-    deployer.link(CoinFiToken, StandardToken);
-    deployer.link(CoinFiToken, Ownable);
-    deployer.link(CoinFiToken, BurnableToken);
-    deployer.link(CoinFiToken, SafeMath);
-
-    var time = new Date().getTime() / 1000;
+    //var time = new Date().getTime() / 1000;
 
     deployer.deploy(CoinFiToken, accounts[1]).then(function() {
-        return deployer.deploy(CoinFiSale);
+      console.log("Beneficiary account: ", accounts[1]);
+      return deployer.deploy(
+        CoinFiSale,
+        accounts[1], // beneficiary
+        0.25, // min individual contribution in ETH
+        15, // max individual contribution in ETH
+        1515359912, // UNIX timestamp of start of sale
+        7500, // COFI:ETH conversion rate
+        CoinFiToken.address
+      );
     });
 };
