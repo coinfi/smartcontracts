@@ -1,16 +1,13 @@
-# CoinFi Token Sale Smart Contracts
+# CoinFi Smart Contracts
 
 Ethereum smart contracts for the [CoinFi](https://sale.coinfi.com) ERC-20 Token.
+
+Includes the token smart contract along with airdrop functionality and team lockup.
 
 Currently a work in progress.
 
 ## Requirements
 
-* NodeJS (v8.9+)
-* Truffle Framework (v4.0.3)
+* Remix / Mist
 * Solidity (v0.4.18)
-
-## Setup
-
-`npm install`
 
