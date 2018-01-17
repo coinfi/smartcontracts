@@ -61,33 +61,14 @@ contract CoinFiToken is StandardToken, Ownable {
         tokenSupply = TOKEN_SUPPLY;
         publicSaleSupply = PUBLIC_SALE_TOKENS;
 
-        // Genesis; mint all tokens
-        balances[msg.sender] = tokenSupply;
-        Transfer(address(0x0), msg.sender, tokenSupply);
-
         adminAddress = _admin;
         approve(adminAddress, tokenSupply);
     }
 
-    /**
-     * Associates this token with an existing public sale smart contract,
-     * allocating the contract an allowance of tokens from the public sale supply.
-     * This gives the public sale the ability to call transferFrom() to transfer
-     * tokens to whomever has purchased them.
-     *
-     * @param _publicSaleAddress The address of the public sale contract that will sell this token
-     * @param _amountOfTokens The supply of tokens provided to the public sale
-     */
-    function allocateToPublicSale(address _publicSaleAddress, uint256 _amountOfTokens) external onlyOwner {
-        require(!transferEnabled);
-        require(_amountOfTokens <= publicSaleSupply);
-
-        // Clear old allocation and set allocation of new;
-        // Note this operation supports different contract addresses
-        approve(publicSaleAddress, 0);
-        approve(_publicSaleAddress, _amountOfTokens);
-
-        publicSaleAddress = _publicSaleAddress;
+    function allocateToAirdrop(address _to) external onlyOwner {
+      // Genesis; mint all tokens
+      balances[_to] = tokenSupply;
+      Transfer(address(0x0), _to, tokenSupply);
     }
 
     /**

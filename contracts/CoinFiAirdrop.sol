@@ -3,17 +3,18 @@ pragma solidity 0.4.18;
 
 import "./ownership/Ownable.sol";
 import "./token/ERC20Basic.sol";
+import "./CoinFiToken.sol";
 
 contract CoinFiAirdrop is Ownable {
     uint256 public constant AIRDROP_AMOUNT = 500 * (10**18);
 
     // Actual token instance to airdrop
-    ERC20Basic public token;
+    CoinFiToken public token;
 
     // Array of airdrop recipients
     /* address[] public airdropRecipients; */
 
-    function CoinFiAirdrop(ERC20Basic _token) public {
+    function CoinFiAirdrop(CoinFiToken _token) public {
         token = _token;
     }
 
