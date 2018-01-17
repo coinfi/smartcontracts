@@ -90,6 +90,12 @@ contract CoinFiToken is StandardToken, Ownable {
     /* function transfer(address _to, uint256 _value) public returns (bool) {
         return super.transfer(_to, _value);
     } */
+    /**
+     * Overrides the ERC20 transfer() function to only allow token transfers after enableTransfer() is called.
+     */
+    function transfer(address _to, uint256 _value) public onlyWhenTransferEnabled validDestination(_to) returns (bool) {
+        return super.transfer(_to, _value);
+    }
 
     /**
      * Overrides the ERC20 transferFrom() function to only allow token transfers after enableTransfer() is called.

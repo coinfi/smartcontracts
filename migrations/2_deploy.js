@@ -11,6 +11,7 @@ async  function liveDeploy(deployer, accounts) {
   await deployer.deploy(CoinFiAirdrop, token.address);
   const airdrop = await CoinFiAirdrop.deployed();
   console.log("truffle deployed airdrop address", airdrop.address);
+  await token.enableTransfer();
   await token.allocateToAirdrop(airdrop.address);
   console.log('airdrop.token',await airdrop.token())
   console.log('before airdrop', await token.balanceOf(accounts[1]))
