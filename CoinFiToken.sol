@@ -135,10 +135,6 @@ contract CoinFiToken is BasicToken, Ownable {
 
     // 300 million tokens minted
     uint256 public constant INITIAL_SUPPLY = 300000000 * (10 ** uint256(decimals));
-    uint public constant AIRDROP_AMOUNT = 500 * (10 ** uint256(decimals));
-
-    // Array of airdrop recipients
-    address[] public airdropRecipients;
 
     // Indicates whether token transfer is enabled
     bool public transferEnabled = false;
@@ -154,22 +150,6 @@ contract CoinFiToken is BasicToken, Ownable {
         totalSupply = INITIAL_SUPPLY;
         balances[msg.sender] = INITIAL_SUPPLY;
         Transfer(0x0, msg.sender, INITIAL_SUPPLY);
-    }
-
-    function setAirdropRecipients(address[] whitelistAddresses) external onlyOwner {
-        airdropRecipients = whitelistAddresses;
-    }
-
-    function getAirdropRecipients() public view returns (address[]) {
-        return airdropRecipients;
-    }
-
-    function sendAirdrop() external onlyOwner {
-        require(airdropRecipients.length > 0);
-
-        for (uint i = 0; i < airdropRecipients.length; i++) {
-            transfer(airdropRecipients[i], AIRDROP_AMOUNT);
-        }
     }
 
     /**
