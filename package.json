@@ -1,0 +1,26 @@
+{
+  "name": "smartcontracts",
+  "version": "1.0.0",
+  "description": "Ethereum smart contracts for the [CoinFi](https://sale.coinfi.com) ERC-20 Token.",
+  "main": "index.js",
+  "dependencies": {
+    "lodash": "^4.17.4",
+    "readlines": "^0.2.0",
+    "solium": "^1.1.2",
+    "web3": "^0.20.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coinfi/smartcontracts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/coinfi/smartcontracts/issues"
+  },
+  "homepage": "https://github.com/coinfi/smartcontracts#readme"
+}
