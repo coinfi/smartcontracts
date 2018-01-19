@@ -63,22 +63,11 @@ contract CoinFiAirdrop is Ownable {
     // Actual token instance to airdrop
     ERC20Basic public token;
 
-    // Array of airdrop recipients
-    address[] public airdropRecipients;
-
     function CoinFiAirdrop(ERC20Basic _token) public {
         token = _token;
     }
 
-    function getAirdropRecipients() public view returns (address[]) {
-        return airdropRecipients;
-    }
-
-    function setAirdropRecipients(address[] whitelistAddresses) external onlyOwner {
-        airdropRecipients = whitelistAddresses;
-    }
-
-    function sendAirdrop() external onlyOwner {
+    function sendAirdrop(address[] airdropRecipients) external onlyOwner {
         require(airdropRecipients.length > 0);
 
         for (uint i = 0; i < airdropRecipients.length; i++) {

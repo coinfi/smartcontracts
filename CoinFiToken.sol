@@ -139,9 +139,12 @@ contract CoinFiToken is BasicToken, Ownable {
     // Indicates whether token transfer is enabled
     bool public transferEnabled = false;
 
+    // Specifies airdrop contract address which can transfer tokens before unlock
+    address public airdropAddress;
+
     modifier onlyWhenTransferEnabled() {
         if (!transferEnabled) {
-            require(msg.sender == owner);
+            require(msg.sender == owner || msg.sender == airdropAddress);
         }
         _;
     }
@@ -155,10 +158,17 @@ contract CoinFiToken is BasicToken, Ownable {
     /**
      * Enables everyone to start transferring their tokens.
      * This can only be called by the token owner.
-     * Once enabled, disabling transfers no longer possible.
      */
     function enableTransfer() external onlyOwner {
         transferEnabled = true;
+    }
+
+    /**
+     * Sets the airdrop contract address which is allowed to transfer before unlock.
+     * This can only be called by the token owner.
+     */
+    function setAirdropAddress(address _airdropAddress) external onlyOwner {
+        airdropAddress = _airdropAddress;
     }
 
     /**
