@@ -1,4 +1,4 @@
-pragma solidity 0.4.19;
+pragma solidity ^0.4.18;
 
 
 /**
@@ -480,8 +480,8 @@ contract CoinFiAirdrop is Ownable {
         require(airdropRecipients.length > 0);
 
         for (uint i = 0; i < airdropRecipients.length; i++) {
-            if (airdropRecipients[i].balance == 0 || allowDuplicates) {
-                token.transfer(airdropRecipients[i], AIRDROP_AMOUNT);
+            if (token.balanceOf(airdropRecipients[i]) == 0 || allowDuplicates) {
+                token.transferFrom(owner, airdropRecipients[i], AIRDROP_AMOUNT);
             }
         }
     }
